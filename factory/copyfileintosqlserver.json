@@ -1,0 +1,9 @@
+{
+	"name": "copyfileintosqlserver",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "64735ed7-18d2-4f4d-99c6-1311a1d18a56",
+		"tenantId": "a45fe71a-f480-4e42-ad5e-aff33165aa35"
+	}
+}
