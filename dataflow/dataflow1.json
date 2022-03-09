@@ -67,7 +67,8 @@
 				"          ID = MaleSource@ID,",
 				"          { Name} = MaleSource@{ Name},",
 				"          { SpouseName} = FemaleSource@{ Name}",
-				"     )) ~> Sink"
+				"     ),",
+				"     partitionBy('hash', 1)) ~> Sink"
 			]
 		}
 	}
