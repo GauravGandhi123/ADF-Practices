@@ -1,0 +1,74 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "MaleSource",
+						"type": "DatasetReference"
+					},
+					"name": "MaleSource"
+				},
+				{
+					"dataset": {
+						"referenceName": "FemaleSource",
+						"type": "DatasetReference"
+					},
+					"name": "FemaleSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Relationship",
+						"type": "DatasetReference"
+					},
+					"name": "Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "Join"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ID as string,",
+				"          { Name} as string,",
+				"          { SpouseID} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> MaleSource",
+				"source(output(",
+				"          ID as string,",
+				"          { Name} as string,",
+				"          { SpouseID} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> FemaleSource",
+				"MaleSource, FemaleSource join(MaleSource@{ SpouseID} == FemaleSource@{ SpouseID},",
+				"     joinType:'inner',",
+				"     partitionBy('hash', 1),",
+				"     broadcast: 'auto')~> Join",
+				"Join sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ID as string,",
+				"          { Name} as string,",
+				"          { SpouseName} as string",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          ID = MaleSource@ID,",
+				"          { Name} = MaleSource@{ Name},",
+				"          { SpouseName} = FemaleSource@{ Name}",
+				"     )) ~> Sink"
+			]
+		}
+	}
+}
