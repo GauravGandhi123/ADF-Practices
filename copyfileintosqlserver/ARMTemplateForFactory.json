@@ -21,6 +21,54 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/DataFlow_Concept')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Relationship",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"MaleSource": {},
+									"FemaleSource": {},
+									"Sink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/dataflow1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/IF_Condition_Activity')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -470,6 +518,9 @@
 					"transformations": [
 						{
 							"name": "Join"
+						},
+						{
+							"name": "filter1"
 						}
 					],
 					"scriptLines": [
@@ -493,13 +544,16 @@
 						"     joinType:'inner',",
 						"     partitionBy('hash', 1),",
 						"     broadcast: 'auto')~> Join",
-						"Join sink(allowSchemaDrift: true,",
+						"Join filter(equals(MaleSource@{ Name},'Gaurav'),",
+						"     partitionBy('hash', 1)) ~> filter1",
+						"filter1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
 						"          ID as string,",
 						"          { Name} as string,",
 						"          { SpouseName} as string",
 						"     ),",
+						"     partitionFileNames:['Relationship.txt'],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     mapColumn(",
@@ -515,54 +569,6 @@
 				"[concat(variables('factoryId'), '/datasets/MaleSource')]",
 				"[concat(variables('factoryId'), '/datasets/FemaleSource')]",
 				"[concat(variables('factoryId'), '/datasets/Relationship')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DataFlow_Concept')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Relationship",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "1.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "dataflow1",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"MaleSource": {},
-									"FemaleSource": {},
-									"Sink": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/dataflow1')]"
 			]
 		}
 	]
