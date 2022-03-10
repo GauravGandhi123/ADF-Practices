@@ -1,5 +1,5 @@
 {
-	"name": "employee",
+	"name": "output",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureBlobStorage1",
@@ -10,8 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"fileName": "employee.txt",
-				"folderPath": "input",
+				"folderPath": "Output1",
 				"container": "amrita"
 			},
 			"columnDelimiter": ",",
@@ -19,19 +18,6 @@
 			"firstRowAsHeader": true,
 			"quoteChar": "\""
 		},
-		"schema": [
-			{
-				"name": "ID",
-				"type": "String"
-			},
-			{
-				"name": " Name",
-				"type": "String"
-			},
-			{
-				"name": " DesignationID",
-				"type": "String"
-			}
-		]
+		"schema": []
 	}
 }
