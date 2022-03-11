@@ -21,12 +21,15 @@
 		},
 		"schema": [
 			{
+				"name": "ID",
 				"type": "String"
 			},
 			{
+				"name": " Name",
 				"type": "String"
 			},
 			{
+				"name": "Designation",
 				"type": "String"
 			}
 		]
