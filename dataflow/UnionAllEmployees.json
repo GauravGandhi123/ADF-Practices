@@ -20,21 +20,33 @@
 				},
 				{
 					"dataset": {
-						"referenceName": "Lead",
-						"type": "DatasetReference"
-					},
-					"name": "Lead"
-				},
-				{
-					"dataset": {
 						"referenceName": "Developer",
 						"type": "DatasetReference"
 					},
 					"name": "Developer"
+				},
+				{
+					"dataset": {
+						"referenceName": "Lead",
+						"type": "DatasetReference"
+					},
+					"name": "Lead"
 				}
 			],
-			"sinks": [],
-			"transformations": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "UniqueAllEmployee",
+						"type": "DatasetReference"
+					},
+					"name": "UnionAllEmployee"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AllEmployee"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          ID as string,",
@@ -53,13 +65,13 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> Manager",
 				"source(output(",
-				"          Column_1 as string,",
-				"          Column_2 as string,",
-				"          Column_3 as string",
+				"          ID as string,",
+				"          { Name} as string,",
+				"          Designation as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> Lead",
+				"     ignoreNoFilesFound: false) ~> Developer",
 				"source(output(",
 				"          ID as string,",
 				"          { Name} as string,",
@@ -67,7 +79,19 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> Developer"
+				"     ignoreNoFilesFound: false) ~> Lead",
+				"CEO, Manager, Lead, Developer union(byName: true)~> AllEmployee",
+				"AllEmployee sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['AllEmployee.txt'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          ID,",
+				"          { Name},",
+				"          Designation",
+				"     ),",
+				"     partitionBy('hash', 1)) ~> UnionAllEmployee"
 			]
 		}
 	}
