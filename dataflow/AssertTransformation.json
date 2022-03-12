@@ -30,9 +30,9 @@
 			],
 			"scriptLines": [
 				"source(output(",
-				"          ID as string,",
+				"          ID as integer,",
 				"          { Name} as string,",
-				"          { DesignationID} as string,",
+				"          { DesignationID} as integer,",
 				"          DOJ as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
