@@ -13,6 +13,107 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/UnionAllEmployees')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "CEO",
+								"type": "DatasetReference"
+							},
+							"name": "CEO"
+						},
+						{
+							"dataset": {
+								"referenceName": "Manager",
+								"type": "DatasetReference"
+							},
+							"name": "Manager"
+						},
+						{
+							"dataset": {
+								"referenceName": "Developer",
+								"type": "DatasetReference"
+							},
+							"name": "Developer"
+						},
+						{
+							"dataset": {
+								"referenceName": "Lead",
+								"type": "DatasetReference"
+							},
+							"name": "Lead"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "UniqueAllEmployee",
+								"type": "DatasetReference"
+							},
+							"name": "UnionAllEmployee"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AllEmployee"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          ID as string,",
+						"          { Name} as string,",
+						"          Designation as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> CEO",
+						"source(output(",
+						"          ID as string,",
+						"          { Name} as string,",
+						"          Designation as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Manager",
+						"source(output(",
+						"          ID as string,",
+						"          { Name} as string,",
+						"          Designation as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Developer",
+						"source(output(",
+						"          ID as string,",
+						"          { Name} as string,",
+						"          Designation as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Lead",
+						"CEO, Manager, Lead, Developer union(byName: true)~> AllEmployee",
+						"AllEmployee sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['AllEmployee.txt'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          ID,",
+						"          { Name},",
+						"          Designation",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> UnionAllEmployee"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -232,78 +333,48 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/AssertTransformation')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
+			"name": "[concat(parameters('factoryName'), '/AssertTransformationPipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
-							},
-							"name": "Employee"
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
 						},
-						{
-							"dataset": {
-								"referenceName": "Designation",
-								"type": "DatasetReference"
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "AssertTransformation",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Employee": {},
+									"Designation": {},
+									"Destination": {}
+								}
 							},
-							"name": "Designation"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "output",
-								"type": "DatasetReference"
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
 							},
-							"name": "Destination"
+							"traceLevel": "Fine"
 						}
-					],
-					"transformations": [
-						{
-							"name": "AssertChecks"
-						},
-						{
-							"name": "CheckErrorRows"
-						},
-						{
-							"name": "FilteringGoodRows"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          ID as integer,",
-						"          { Name} as string,",
-						"          { DesignationID} as integer,",
-						"          DOJ as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> Employee",
-						"source(output(",
-						"          ID as integer,",
-						"          Designation as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> Designation",
-						"Employee, Designation assert(expectTrue(!isNull(toDate(DOJ, 'yyyyMMdd')), false, 'DOJ', null, 'It will check the DOJ column'),",
-						"     expectUnique(Employee@ID, false, 'Unique ID Check', null, 'It is checking unique id for all employees'),",
-						"     expectExists(Designation@ID == { DesignationID}, false, 'ID Check', null, 'It is checking designation id present in designation file')) ~> AssertChecks",
-						"AssertChecks derive(IsErrorRow = isError()) ~> CheckErrorRows",
-						"CheckErrorRows filter(IsErrorRow == false()) ~> FilteringGoodRows",
-						"FilteringGoodRows sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['GoodRecords.txt'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> Destination"
-					]
-				}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
 			},
 			"dependsOn": []
 		},
@@ -401,7 +472,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/UnionAllEmployees')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/conditional split transformation')]",
