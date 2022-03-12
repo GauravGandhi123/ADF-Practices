@@ -19,13 +19,24 @@
 					"name": "Designation"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "output",
+						"type": "DatasetReference"
+					},
+					"name": "Destination"
+				}
+			],
 			"transformations": [
 				{
 					"name": "AssertChecks"
 				},
 				{
 					"name": "CheckErrorRows"
+				},
+				{
+					"name": "FilteringGoodRows"
 				}
 			],
 			"scriptLines": [
@@ -39,14 +50,23 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> Employee",
 				"source(output(",
-				"          ID as string,",
+				"          ID as integer,",
 				"          Designation as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> Designation",
-				"Employee assert(expectTrue(!isNull(toDate(DOJ, 'yyyyMMDD')), false, 'DOJ', null, 'It will check the DOJ column')) ~> AssertChecks",
-				"AssertChecks derive() ~> CheckErrorRows"
+				"Employee, Designation assert(expectTrue(!isNull(toDate(DOJ, 'yyyyMMdd')), false, 'DOJ', null, 'It will check the DOJ column'),",
+				"     expectUnique(Employee@ID, false, 'Unique ID Check', null, 'It is checking unique id for all employees'),",
+				"     expectExists(Designation@ID == { DesignationID}, false, 'ID Check', null, 'It is checking designation id present in designation file')) ~> AssertChecks",
+				"AssertChecks derive(IsErrorRow = isError()) ~> CheckErrorRows",
+				"CheckErrorRows filter(IsErrorRow == false()) ~> FilteringGoodRows",
+				"FilteringGoodRows sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['GoodRecords.txt'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> Destination"
 			]
 		}
 	}
