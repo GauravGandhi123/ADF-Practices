@@ -22,7 +22,10 @@
 			"sinks": [],
 			"transformations": [
 				{
-					"name": "AssertCheck"
+					"name": "AssertChecks"
+				},
+				{
+					"name": "CheckErrorRows"
 				}
 			],
 			"scriptLines": [
@@ -42,7 +45,8 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> Designation",
-				"Employee assert(expectTrue(!isNull(toDate(DOJ, 'yyyyMMDD')), false, 'DOJ', null, 'It will check the DOJ column')) ~> AssertCheck"
+				"Employee assert(expectTrue(!isNull(toDate(DOJ, 'yyyyMMDD')), false, 'DOJ', null, 'It will check the DOJ column')) ~> AssertChecks",
+				"AssertChecks derive() ~> CheckErrorRows"
 			]
 		}
 	}
