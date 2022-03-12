@@ -1,0 +1,49 @@
+{
+	"name": "AssertTransformation",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "EmployeeData",
+						"type": "DatasetReference"
+					},
+					"name": "Employee"
+				},
+				{
+					"dataset": {
+						"referenceName": "Designation",
+						"type": "DatasetReference"
+					},
+					"name": "Designation"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "AssertCheck"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ID as string,",
+				"          { Name} as string,",
+				"          { DesignationID} as string,",
+				"          DOJ as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> Employee",
+				"source(output(",
+				"          ID as string,",
+				"          Designation as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> Designation",
+				"Employee assert(expectTrue(!isNull(toDate(DOJ, 'yyyyMMDD')), false, 'DOJ', null, 'It will check the DOJ column')) ~> AssertCheck"
+			]
+		}
+	}
+}

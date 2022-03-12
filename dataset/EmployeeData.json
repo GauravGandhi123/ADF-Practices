@@ -1,0 +1,41 @@
+{
+	"name": "EmployeeData",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "employee.txt",
+				"folderPath": "input",
+				"container": "amrita"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "ID",
+				"type": "String"
+			},
+			{
+				"name": " Name",
+				"type": "String"
+			},
+			{
+				"name": " DesignationID",
+				"type": "String"
+			},
+			{
+				"name": "DOJ",
+				"type": "String"
+			}
+		]
+	}
+}
