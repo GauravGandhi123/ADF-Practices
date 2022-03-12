@@ -607,6 +607,52 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/EmployeeData')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "employee.txt",
+						"folderPath": "input",
+						"container": "amrita"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "ID",
+						"type": "String"
+					},
+					{
+						"name": " Name",
+						"type": "String"
+					},
+					{
+						"name": " DesignationID",
+						"type": "String"
+					},
+					{
+						"name": "DOJ",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/IF_Condition_Activity')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -872,94 +918,6 @@
 				"[concat(variables('factoryId'), '/datasets/Developer')]",
 				"[concat(variables('factoryId'), '/datasets/Lead')]",
 				"[concat(variables('factoryId'), '/datasets/UniqueAllEmployee')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "MaleSource",
-								"type": "DatasetReference"
-							},
-							"name": "MaleSource"
-						},
-						{
-							"dataset": {
-								"referenceName": "FemaleSource",
-								"type": "DatasetReference"
-							},
-							"name": "FemaleSource"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "Relationship",
-								"type": "DatasetReference"
-							},
-							"name": "Sink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "Join"
-						},
-						{
-							"name": "filter1"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          ID as string,",
-						"          { Name} as string,",
-						"          { SpouseID} as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> MaleSource",
-						"source(output(",
-						"          ID as string,",
-						"          { Name} as string,",
-						"          { SpouseID} as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> FemaleSource",
-						"MaleSource, FemaleSource join(MaleSource@{ SpouseID} == FemaleSource@{ SpouseID},",
-						"     joinType:'inner',",
-						"     partitionBy('hash', 1),",
-						"     broadcast: 'auto')~> Join",
-						"Join filter(equals(MaleSource@{ Name},'Gaurav'),",
-						"     partitionBy('hash', 1)) ~> filter1",
-						"filter1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          ID as string,",
-						"          { Name} as string,",
-						"          { SpouseName} as string",
-						"     ),",
-						"     partitionFileNames:['Relationship.txt'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     mapColumn(",
-						"          ID = MaleSource@ID,",
-						"          { Name} = MaleSource@{ Name},",
-						"          { SpouseName} = FemaleSource@{ Name}",
-						"     ),",
-						"     partitionBy('hash', 1)) ~> Sink"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/MaleSource')]",
-				"[concat(variables('factoryId'), '/datasets/FemaleSource')]",
-				"[concat(variables('factoryId'), '/datasets/Relationship')]"
 			]
 		}
 	]
