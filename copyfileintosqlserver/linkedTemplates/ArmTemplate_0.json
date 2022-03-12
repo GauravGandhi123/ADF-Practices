@@ -356,6 +356,55 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/JsonDemo')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "demo.json",
+						"folderPath": "input",
+						"container": "amrita"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"skills": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						"contact": {
+							"type": "object",
+							"properties": {
+								"mobile": {
+									"type": "string"
+								},
+								"landline": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Lead')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -811,86 +860,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/InputDataset')]",
 				"[concat(variables('factoryId'), '/datasets/OutputDataset')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AssertTransformation')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "EmployeeData",
-								"type": "DatasetReference"
-							},
-							"name": "Employee"
-						},
-						{
-							"dataset": {
-								"referenceName": "Designation",
-								"type": "DatasetReference"
-							},
-							"name": "Designation"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "output",
-								"type": "DatasetReference"
-							},
-							"name": "Destination"
-						}
-					],
-					"transformations": [
-						{
-							"name": "AssertChecks"
-						},
-						{
-							"name": "CheckErrorRows"
-						},
-						{
-							"name": "FilteringGoodRows"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          ID as integer,",
-						"          { Name} as string,",
-						"          { DesignationID} as integer,",
-						"          DOJ as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> Employee",
-						"source(output(",
-						"          ID as integer,",
-						"          Designation as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> Designation",
-						"Employee, Designation assert(expectTrue(!isNull(toDate(DOJ, 'yyyyMMdd')), false, 'DOJ', null, 'It will check the DOJ column'),",
-						"     expectUnique(Employee@ID, false, 'Unique ID Check', null, 'It is checking unique id for all employees'),",
-						"     expectExists(Designation@ID == { DesignationID}, false, 'Desination ID Check', null, 'It will check the Designation ID present or not same as Employee ID')) ~> AssertChecks",
-						"AssertChecks derive(IsErrorRow = isError()) ~> CheckErrorRows",
-						"CheckErrorRows filter(IsErrorRow == false()) ~> FilteringGoodRows",
-						"FilteringGoodRows sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['GoodRecords.txt'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> Destination"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/EmployeeData')]",
-				"[concat(variables('factoryId'), '/datasets/Designation')]",
-				"[concat(variables('factoryId'), '/datasets/output')]"
 			]
 		}
 	]

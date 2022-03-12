@@ -13,6 +13,82 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/AssertTransformation')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "EmployeeData",
+								"type": "DatasetReference"
+							},
+							"name": "Employee"
+						},
+						{
+							"dataset": {
+								"referenceName": "Designation",
+								"type": "DatasetReference"
+							},
+							"name": "Designation"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "output",
+								"type": "DatasetReference"
+							},
+							"name": "Destination"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AssertChecks"
+						},
+						{
+							"name": "CheckErrorRows"
+						},
+						{
+							"name": "FilteringGoodRows"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          ID as integer,",
+						"          { Name} as string,",
+						"          { DesignationID} as integer,",
+						"          DOJ as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Employee",
+						"source(output(",
+						"          ID as integer,",
+						"          Designation as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> Designation",
+						"Employee, Designation assert(expectTrue(!isNull(toDate(DOJ, 'yyyyMMdd')), false, 'DOJ', null, 'It will check the DOJ column'),",
+						"     expectUnique(Employee@ID, false, 'Unique ID Check', null, 'It is checking unique id for all employees'),",
+						"     expectExists(Designation@ID == { DesignationID}, false, 'Desination ID Check', null, 'It will check the Designation ID present or not same as Employee ID')) ~> AssertChecks",
+						"AssertChecks derive(IsErrorRow = isError()) ~> CheckErrorRows",
+						"CheckErrorRows filter(IsErrorRow == false()) ~> FilteringGoodRows",
+						"FilteringGoodRows sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['GoodRecords.txt'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> Destination"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/UnionAllEmployees')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -333,6 +409,67 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/stringify')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "JsonDemo",
+								"type": "DatasetReference"
+							},
+							"name": "demofile"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "output",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "StringifyDemo"
+						},
+						{
+							"name": "derivedColumn1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          name as string,",
+						"          skills as string[],",
+						"          contact as (mobile as string, landline as string)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> demofile",
+						"demofile stringify(ContactStringify = contact ? string,",
+						"     format: 'json') ~> StringifyDemo",
+						"StringifyDemo derive(ContactStringify = toString(ContactStringify)) ~> derivedColumn1",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['stringify.txt'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          name,",
+						"          Contact = ContactStringify",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/AssertTransformationPipeline')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -376,7 +513,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/AssertTransformation')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/DataFlow_Concept')]",
