@@ -1,0 +1,40 @@
+{
+	"name": "Window Function",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Employee_Salary",
+						"type": "DatasetReference"
+					},
+					"name": "EmployeeSalary"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "window1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ID as string,",
+				"          Name as string,",
+				"          Gender as string,",
+				"          Country as string,",
+				"          Salary as string,",
+				"          Department as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> EmployeeSalary",
+				"EmployeeSalary window(over(Department),",
+				"     desc(Salary, false),",
+				"     Dense_Rank = denseRank(),",
+				"          Rank = rank()) ~> window1"
+			]
+		}
+	}
+}
