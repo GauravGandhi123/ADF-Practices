@@ -1,0 +1,50 @@
+{
+	"name": "DataForFlattern",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Json1",
+						"type": "DatasetReference"
+					},
+					"name": "JSONSource"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "flatten1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          id as string,",
+				"          name as string,",
+				"          skills as string[],",
+				"          Address as (state as string, Country as string, zipcode as string),",
+				"          Contact as (Phone as string, email as string)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments',",
+				"     partitionBy('hash', 1)) ~> JSONSource",
+				"JSONSource foldDown(unroll(skills, skills),",
+				"     mapColumn(",
+				"          id,",
+				"          name,",
+				"          skills,",
+				"          state = Address.state,",
+				"          Country = Address.Country,",
+				"          zipcode = Address.zipcode,",
+				"          Phone = Contact.Phone,",
+				"          email = Contact.email",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1"
+			]
+		}
+	}
+}
