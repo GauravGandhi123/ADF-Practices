@@ -2,7 +2,7 @@
 	"name": "employee",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureBlobStorage1",
+			"referenceName": "LK_foremployeefile",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],
@@ -11,8 +11,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": "employee.txt",
-				"folderPath": "input",
-				"container": "amrita"
+				"container": "sourcefiles"
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",
@@ -25,13 +24,10 @@
 				"type": "String"
 			},
 			{
-				"name": " Name",
-				"type": "String"
-			},
-			{
-				"name": " DesignationID",
+				"name": "Name",
 				"type": "String"
 			}
 		]
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }
